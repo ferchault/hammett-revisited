@@ -3,35 +3,26 @@
 
 # ## We compare the training of Hammett, Hammett + $\Delta$-ML, and ML. The goal is to see if and how Hammett improves the predictive power. For each training set size we use a 10-fold cross validation
 
-# In[1]:
-
+import os
+from functools import reduce
 
 import numpy as np
 import pandas as pd
 import scipy
-import matplotlib.pyplot as plt
-import os
-from functools import reduce
-import qml
 from scipy import stats
+
+import qml
 from qml.kernels import gaussian_kernel
 from qml.kernels import laplacian_kernel
 from qml.math import cho_solve
 
-
-# In[2]:
-
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 basepath=os.getcwd() + '/data'
 
-
-# In[3]:
-
-
 combinations='AA AB AC AD BA BB BC BD CA CB CC CD'.split( )
-
-
-# In[4]:
 
 
 def Getsn2(basepath):
@@ -92,43 +83,17 @@ def reshapecopy(datah):
             Each row is a set of substituent and each column a reaction. Contains the corresponding Index
     
     '''
-    data = datah.copy()
+    data = sn2.copy()
     data['reaction'] = data.label.str[-3:]    
     data['label'] = data['label'].str[0:-4]
+    def _colname(current):
+        if current == 'label':
+            return current
+        return 'DeltaG(%s)' % current.replace('_', '')
     
-    AA = data.loc[(data['reaction'] == 'A_A')].drop(['reaction', 'Barrier'], axis=1)
-    AB = data.loc[(data['reaction'] == 'A_B')].drop(['reaction', 'Barrier'], axis=1)
-    AC = data.loc[(data['reaction'] == 'A_C')].drop(['reaction', 'Barrier'], axis=1)
-    AD = data.loc[(data['reaction'] == 'A_D')].drop(['reaction', 'Barrier'], axis=1)
-
-    BA = data.loc[(data['reaction'] == 'B_A')].drop(['reaction', 'Barrier'], axis=1)
-    BB = data.loc[(data['reaction'] == 'B_B')].drop(['reaction', 'Barrier'], axis=1)
-    BC = data.loc[(data['reaction'] == 'B_C')].drop(['reaction', 'Barrier'], axis=1)
-    BD = data.loc[(data['reaction'] == 'B_D')].drop(['reaction', 'Barrier'], axis=1)
-
-    CA = data.loc[(data['reaction'] == 'C_A')].drop(['reaction', 'Barrier'], axis=1)
-    CB = data.loc[(data['reaction'] == 'C_B')].drop(['reaction', 'Barrier'], axis=1)
-    CC = data.loc[(data['reaction'] == 'C_C')].drop(['reaction', 'Barrier'], axis=1)
-    CD = data.loc[(data['reaction'] == 'C_D')].drop(['reaction', 'Barrier'], axis=1)
-    
-    dfs = [AA,AB,AC,AD,BA,BB,BC,BD,CA,CB,CC,CD]
-    
-    df_interm = reduce(lambda left,right: pd.merge(left,right, how = 'outer', left_on=['label'], right_on = ['label']), dfs)
-    
-    df_interm.columns = ['label','DeltaG(AA)','DeltaG(AB)','DeltaG(AC)','DeltaG(AD)','DeltaG(BA)','DeltaG(BB)','DeltaG(BC)',                     'DeltaG(BD)','DeltaG(CA)','DeltaG(CB)','DeltaG(CC)','DeltaG(CD)']
-    
-    df_final2 = df_interm.set_index(['label'])
-    
-    df_final2 = df_final2.dropna(axis=0, how='all')
-    
-    df_final2 = df_final2.sort_index(axis=0)
-    
-    df_final2 = df_final2.drop_duplicates()
-    
-    return(df_final2)
-
-
-# In[10]:
+    q = data.pivot(index='label', columns='reaction', values='Barrier').reset_index()
+    q.columns = list(map(_colname, q.columns))
+    return q
 
 
 def reshape4hamm(datah):
