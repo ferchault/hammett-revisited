@@ -568,88 +568,89 @@ def traintest(data, TSsize):
     return(traindf,testdf)
 
 
-basepath=os.getcwd() + '/data'
+if __name__ == '__main__':
+    basepath=os.getcwd() + '/data'
 
-combinations='AA AB AC AD BA BB BC BD CA CB CC CD'.split( )
+    combinations='AA AB AC AD BA BB BC BD CA CB CC CD'.split( )
 
-sn2 = Getsn2(basepath)
+    sn2 = Getsn2(basepath)
 
-onehot = get_onehot_matr(sn2)
-KernelML = laplacian_kernel(onehot, onehot, 3000)
-KernelML[np.diag_indices_from(KernelML)] += 1e-8
+    onehot = get_onehot_matr(sn2)
+    KernelML = laplacian_kernel(onehot, onehot, 3000)
+    KernelML[np.diag_indices_from(KernelML)] += 1e-8
 
-KernelDML = laplacian_kernel(onehot, onehot, 23000)
-KernelDML[np.diag_indices_from(KernelDML)] += 1e-8
+    KernelDML = laplacian_kernel(onehot, onehot, 23000)
+    KernelDML[np.diag_indices_from(KernelDML)] += 1e-8
 
 
-er_hamm_ls = []
-er_dml_ls = []
-er_ml_ls =[]
+    er_hamm_ls = []
+    er_dml_ls = []
+    er_ml_ls =[]
 
-for TSsize in np.arange(200,1301,100):
-    hammae = []
-    dmlmae = []
-    mlmae = []
-    
-    for fold in range(15):
-        traindf, testdf = traintest(sn2, TSsize)
-
-        MLtrainKernel, MLtestKernel = sliceKernels(traindf, testdf, KernelML)
-        DMLtrainKernel, DMLtestKernel = sliceKernels(traindf, testdf, KernelDML)
-            
-        dicrho, dicsigmas, dicE0 = Hamm_param(traindf, testdf)
-
-        Ham_prediction = Hamm_eval(testdf, dicrho, dicsigmas, dicE0)
-        Hamm_residuals = testdf['Barrier'].values -  Ham_prediction
-
-        Ham_mae =  np.mean(np.abs( Hamm_residuals  ))
-        #print("     Hamm MAE = ", Ham_mae)
-        hammae.append(Ham_mae)
-
-        DMLY_train = traindf['Barrier'].values - Hamm_eval(traindf, dicrho, dicsigmas, dicE0)
-        DMLY_pred = KRR_pred(DMLY_train, DMLtrainKernel, DMLtestKernel)
-        DMLY_mae = np.mean(np.abs( DMLY_pred - Hamm_residuals  ))
-        #print("     DML MAE = ", DMLY_mae)
-        dmlmae.append(DMLY_mae)
-
-        MLY_train = traindf['Barrier'].values
-        MLY_test = testdf['Barrier'].values
-        MLY_pred = KRR_pred(MLY_train, MLtrainKernel, MLtestKernel)
-        MLY_mae = np.mean(np.abs( MLY_pred - MLY_test  ))
-        #print("     ML MAE = ", MLY_mae)
-        mlmae.append(MLY_mae)
+    for TSsize in np.arange(200,1301,100):
+        hammae = []
+        dmlmae = []
+        mlmae = []
         
-    
-    #er_ml1.append(np.mean(np.array(ML_err)))
-    er_hamm_ls.append(np.mean(np.array(hammae)))
-    er_dml_ls.append(np.mean(np.array(dmlmae)))
-    er_ml_ls.append(np.mean(np.array(mlmae)))
-   
+        for fold in range(15):
+            traindf, testdf = traintest(sn2, TSsize)
+
+            MLtrainKernel, MLtestKernel = sliceKernels(traindf, testdf, KernelML)
+            DMLtrainKernel, DMLtestKernel = sliceKernels(traindf, testdf, KernelDML)
+                
+            dicrho, dicsigmas, dicE0 = Hamm_param(traindf, testdf)
+
+            Ham_prediction = Hamm_eval(testdf, dicrho, dicsigmas, dicE0)
+            Hamm_residuals = testdf['Barrier'].values -  Ham_prediction
+
+            Ham_mae =  np.mean(np.abs( Hamm_residuals  ))
+            #print("     Hamm MAE = ", Ham_mae)
+            hammae.append(Ham_mae)
+
+            DMLY_train = traindf['Barrier'].values - Hamm_eval(traindf, dicrho, dicsigmas, dicE0)
+            DMLY_pred = KRR_pred(DMLY_train, DMLtrainKernel, DMLtestKernel)
+            DMLY_mae = np.mean(np.abs( DMLY_pred - Hamm_residuals  ))
+            #print("     DML MAE = ", DMLY_mae)
+            dmlmae.append(DMLY_mae)
+
+            MLY_train = traindf['Barrier'].values
+            MLY_test = testdf['Barrier'].values
+            MLY_pred = KRR_pred(MLY_train, MLtrainKernel, MLtestKernel)
+            MLY_mae = np.mean(np.abs( MLY_pred - MLY_test  ))
+            #print("     ML MAE = ", MLY_mae)
+            mlmae.append(MLY_mae)
+            
+        
+        #er_ml1.append(np.mean(np.array(ML_err)))
+        er_hamm_ls.append(np.mean(np.array(hammae)))
+        er_dml_ls.append(np.mean(np.array(dmlmae)))
+        er_ml_ls.append(np.mean(np.array(mlmae)))
+       
 
 
-# In[20]:
+    # In[20]:
 
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
 
-#get_ipython().run_line_magic('matplotlib', 'notebook')
-plt.plot(np.arange(200,1301,100), np.array(er_hamm_ls), '--o', label='Hammett')
-plt.plot(np.arange(200,1301,100), np.array(er_dml_ls), '--o', label=r'$\Delta$-ML')
-plt.plot(np.arange(200,1301,100), np.array(er_ml_ls), '--o', label=r'ML')
+    #get_ipython().run_line_magic('matplotlib', 'notebook')
+    plt.plot(np.arange(200,1301,100), np.array(er_hamm_ls), '--o', label='Hammett')
+    plt.plot(np.arange(200,1301,100), np.array(er_dml_ls), '--o', label=r'$\Delta$-ML')
+    plt.plot(np.arange(200,1301,100), np.array(er_ml_ls), '--o', label=r'ML')
 
-plt.legend()
-plt.xscale('log')
-plt.yscale('log')
+    plt.legend()
+    plt.xscale('log')
+    plt.yscale('log')
 
-plt.xticks(np.array([200,500,800,1000, 1200]), np.array([200,500,800,1000, 1200]), rotation=45)
-plt.yticks(np.array([2.5,3,4,5,6]), np.array([2.5,3,4,5,6]))
-plt.xlabel('Training set size')
-plt.ylabel('MAE (kcal/mol)')
-plt.title('One-hot encoding learning curves')
-plt.grid(True)
-plt.show()
-plt.savefig("ugly-learning-curves.png", dpi=500, format="png")
+    plt.xticks(np.array([200,500,800,1000, 1200]), np.array([200,500,800,1000, 1200]), rotation=45)
+    plt.yticks(np.array([2.5,3,4,5,6]), np.array([2.5,3,4,5,6]))
+    plt.xlabel('Training set size')
+    plt.ylabel('MAE (kcal/mol)')
+    plt.title('One-hot encoding learning curves')
+    plt.grid(True)
+    plt.show()
+    plt.savefig("ugly-learning-curves.png", dpi=500, format="png")
 
 
