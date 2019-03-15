@@ -75,15 +75,17 @@ def reshapecopy(datah):
             Each row is a set of substituent and each column a reaction. Contains the corresponding Index
     
     '''
-    data = sn2.copy()
+    data = datah.copy()
     data['reaction'] = data.label.str[-3:]    
     data['label'] = data['label'].str[0:-4]
+    data['idx'] = data.index
+
     def _colname(current):
         if current == 'label':
             return current
         return 'DeltaG(%s)' % current.replace('_', '')
     
-    q = data.pivot(index='label', columns='reaction', values='Barrier').reset_index()
+    q = data.pivot(index='label', columns='reaction', values='idx')
     q.columns = list(map(_colname, q.columns))
     return q
 
