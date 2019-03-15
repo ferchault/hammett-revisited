@@ -16,15 +16,6 @@ from qml.kernels import gaussian_kernel
 from qml.kernels import laplacian_kernel
 from qml.math import cho_solve
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
-basepath=os.getcwd() + '/data'
-
-combinations='AA AB AC AD BA BB BC BD CA CB CC CD'.split( )
-
-
 def Getsn2(basepath):
     ''' This function parses the txt file to extract the Activation Energies of the Sn2 reaction
         It takes only the lowest energy conformer and drops duplicates
@@ -151,7 +142,7 @@ def reshape4hamm(datah):
 
 
 def get_onehot_matr(data):
-    ''' This function generates the one-hot encoding rapresentation for all the molecules in the entire dataset
+    ''' This function generates the one-hot encoding representation for all the molecules in the entire dataset
         and puts them all into one array
         
         Parameters
@@ -168,16 +159,16 @@ def get_onehot_matr(data):
     onepot = []
     for i in [ _.split('_') for _ in data['label'] ] :
         for pos in range(4):
-            for lett in 'A B C D E'.split(' '):
-                onepot.append(int(i[pos] == lett))
+            for lett in 'A B C D E'.split():
+                onepot.append(i[pos] == lett)
     
-        for x in 'A B C'.split(' '):
-            onepot.append(int(i[4] == x))
+        for x in 'A B C'.split():
+            onepot.append(i[4] == x)
     
-        for y in 'A B C D'.split(' '):
-            onepot.append(int(i[5] == y))
+        for y in 'A B C D'.split():
+            onepot.append(i[5] == y)
             
-    onepot = np.array(onepot).reshape(len(data), 27)
+    onepot = np.array(onepot).reshape(len(data), 27).astype(np.int)
     
     return(onepot)
 
@@ -577,8 +568,9 @@ def traintest(data, TSsize):
     return(traindf,testdf)
 
 
-# In[18]:
+basepath=os.getcwd() + '/data'
 
+combinations='AA AB AC AD BA BB BC BD CA CB CC CD'.split( )
 
 sn2 = Getsn2(basepath)
 
@@ -637,6 +629,10 @@ for TSsize in np.arange(200,1301,100):
 
 # In[20]:
 
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 #get_ipython().run_line_magic('matplotlib', 'notebook')
 plt.plot(np.arange(200,1301,100), np.array(er_hamm_ls), '--o', label='Hammett')
