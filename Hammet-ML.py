@@ -60,7 +60,7 @@ def Getsn2(basepath):
 # In[16]:
 
 
-def reshapecopy(datah):
+def reshapecopy(datah, via='idx'):
     '''This function reshapes the initial database to separate the subtituents (along the rows)
         from the reactions (one for each column)
         
@@ -85,7 +85,7 @@ def reshapecopy(datah):
             return current
         return 'DeltaG(%s)' % current.replace('_', '')
     
-    q = data.pivot(index='label', columns='reaction', values='idx')
+    q = data.pivot(index='label', columns='reaction', values=via)
     q.columns = list(map(_colname, q.columns))
     return q
 
@@ -105,43 +105,7 @@ def reshape4hamm(datah):
             Each row is a set of substituent and each column a reaction. Contains the correspondin Ea
     
     '''
-    data = datah.copy()
-    data['reaction'] = data.label.str[-3:]    
-    data['label'] = data['label'].str[0:-4]
-    
-    AA = data.loc[(data['reaction'] == 'A_A')].drop(['reaction'], axis=1)
-    AB = data.loc[(data['reaction'] == 'A_B')].drop(['reaction'], axis=1)
-    AC = data.loc[(data['reaction'] == 'A_C')].drop(['reaction'], axis=1)
-    AD = data.loc[(data['reaction'] == 'A_D')].drop(['reaction'], axis=1)
-
-    BA = data.loc[(data['reaction'] == 'B_A')].drop(['reaction'], axis=1)
-    BB = data.loc[(data['reaction'] == 'B_B')].drop(['reaction'], axis=1)
-    BC = data.loc[(data['reaction'] == 'B_C')].drop(['reaction'], axis=1)
-    BD = data.loc[(data['reaction'] == 'B_D')].drop(['reaction'], axis=1)
-
-    CA = data.loc[(data['reaction'] == 'C_A')].drop(['reaction'], axis=1)
-    CB = data.loc[(data['reaction'] == 'C_B')].drop(['reaction'], axis=1)
-    CC = data.loc[(data['reaction'] == 'C_C')].drop(['reaction'], axis=1)
-    CD = data.loc[(data['reaction'] == 'C_D')].drop(['reaction'], axis=1)
-    
-    dfs = [AA,AB,AC,AD,BA,BB,BC,BD,CA,CB,CC,CD]
-    
-    df_interm = reduce(lambda left,right: pd.merge(left,right, how = 'outer', left_on=['label'], right_on = ['label']), dfs)
-    
-    df_interm.columns = ['label','DeltaG(AA)','DeltaG(AB)','DeltaG(AC)','DeltaG(AD)','DeltaG(BA)','DeltaG(BB)','DeltaG(BC)',                     'DeltaG(BD)','DeltaG(CA)','DeltaG(CB)','DeltaG(CC)','DeltaG(CD)']
-    
-    df_final2 = df_interm.set_index(['label'])
-    
-    df_final2 = df_final2.dropna(axis=0, how='all')
-    
-    df_final2 = df_final2.sort_index(axis=0)
-    
-    df_final2 = df_final2.drop_duplicates()
-    
-    return(df_final2)
-
-
-# In[9]:
+    reshapecopy(datah, 'Barrier')
 
 
 def get_onehot_matr(data):
@@ -603,7 +567,7 @@ if __name__ == '__main__':
         dmlmae = []
         mlmae = []
         
-        for fold in range(15):
+        for fold in range(2):
             traindf, testdf = traintest(sn2, TSsize)
 
             if args.ml:
@@ -618,6 +582,7 @@ if __name__ == '__main__':
 
                 Ham_mae =  np.mean(np.abs( Hamm_residuals  ))
                 hammae.append(Ham_mae)
+                print (Ham_mae)
 
             if args.ml:
                 DMLY_train = traindf['Barrier'].values - Hamm_eval(traindf, dicrho, dicsigmas, dicE0)
